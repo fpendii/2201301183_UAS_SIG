@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\admin\kelola_pom_mini;
+use App\Http\Controllers\admin\KelolaPomMiniController;
 use App\Http\Controllers\Pengguna\LandingPageController;
 use Illuminate\Support\Facades\Route;
 
@@ -21,3 +23,10 @@ Route::get('', function () {
 Route::prefix('')->group(function () {
     Route::get('landing-page', [LandingPageController::class, 'index']);
 });
+
+Route::prefix('admin')->group(function () {
+    Route::get('kelola-pom-mini', [KelolaPomMiniController::class, 'index']);
+    Route::get('pom-mini/tambah', [KelolaPomMiniController::class, 'tambah']);
+    Route::post('pom-mini/simpan', [KelolaPomMiniController::class, 'simpan']);
+});
+

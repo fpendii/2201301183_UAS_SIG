@@ -20,7 +20,9 @@
 
     <main class="container mx-auto mt-8 p-4 bg-white rounded shadow-lg">
         <div id="mapid" class="rounded mb-4"></div>
-        <div id="distanceInfo" class="text-center text-lg font-semibold text-blue-600"></div>
+        <button id="checkNearest" class="bg-blue-600 text-white px-4 py-2 rounded">Cek Lokasi Terdekat</button>
+        <div id="distanceInfo" class="text-center text-lg font-semibold text-blue-600 mt-4"></div>
+        <div id="nearestInfo" class="text-center text-lg font-semibold text-green-600 mt-4"></div>
     </main>
 
     <footer class="bg-blue-600 p-4 mt-8">
@@ -36,12 +38,19 @@
             maxZoom: 19,
         }).addTo(map);
 
-        // Data statis untuk Pom Mini
-        var pomMiniData = [
-            {name: "Pom Mini 1", address: "Alamat 1", latitude: -3.3176, longitude: 114.5901},
-            {name: "Pom Mini 2", address: "Alamat 2", latitude: -3.3200, longitude: 114.5950},
-            // Tambahkan lebih banyak data sesuai kebutuhan
-        ];
+        // Data Pom Mini dari Laravel
+        var pomMiniData = @json($pomMini);
+
+        // Fungsi untuk menambahkan marker untuk setiap Pom Mini
+        function addMarkers() {
+            pomMiniData.forEach(function(pom) {
+                L.marker([pom.latitude, pom.longitude]).addTo(map)
+                    .bindPopup(`<b>${pom.nama}</b><br>${pom.alamat}`);
+            });
+        }
+
+        // Panggil fungsi addMarkers untuk menambahkan marker pada saat halaman dimuat
+        addMarkers();
 
         // Fungsi untuk menghitung jarak
         function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -57,27 +66,54 @@
         }
 
         // Mendapatkan lokasi pengguna saat ini
+        var userLat, userLon;
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function(position) {
-                var userLat = position.coords.latitude;
-                var userLon = position.coords.longitude;
+                userLat = position.coords.latitude;
+                userLon = position.coords.longitude;
 
-                L.marker([userLat, userLon]).addTo(map)
+                // Tambahkan marker untuk lokasi pengguna
+                var userMarker = L.marker([userLat, userLon]).addTo(map)
                     .bindPopup("<b>Lokasi Anda</b>").openPopup();
 
                 // Menampilkan marker dan jarak untuk setiap Pom Mini
                 pomMiniData.forEach(function(pom) {
                     var distance = calculateDistance(userLat, userLon, pom.latitude, pom.longitude).toFixed(2);
                     L.marker([pom.latitude, pom.longitude]).addTo(map)
-                        .bindPopup(`<b>${pom.name}</b><br>${pom.address}<br>Jarak: ${distance} km`);
+                        .bindPopup(`<b>${pom.nama}</b><br>${pom.alamat}<br>Jarak: ${distance} km`);
                 });
 
                 var distanceInfo = document.getElementById('distanceInfo');
                 distanceInfo.innerHTML = 'Jarak ke setiap Pom Mini telah dihitung dan ditampilkan pada popup marker.';
+            }, function(error) {
+                alert("Geolocation gagal: " + error.message);
             });
         } else {
             alert("Geolocation tidak didukung oleh browser ini.");
         }
+
+        document.getElementById('checkNearest').addEventListener('click', function() {
+            if (userLat && userLon) {
+                var nearestPomMini = null;
+                var nearestDistance = Infinity;
+
+                // Mencari Pom Mini terdekat
+                pomMiniData.forEach(function(pom) {
+                    var distance = calculateDistance(userLat, userLon, pom.latitude, pom.longitude);
+                    if (distance < nearestDistance) {
+                        nearestDistance = distance;
+                        nearestPomMini = pom;
+                    }
+                });
+
+                if (nearestPomMini) {
+                    var nearestInfo = document.getElementById('nearestInfo');
+                    nearestInfo.innerHTML = `Pom Mini terdekat adalah ${nearestPomMini.nama} di ${nearestPomMini.alamat}, dengan jarak ${nearestDistance.toFixed(2)} km.`;
+                }
+            } else {
+                alert("Lokasi Anda belum ditemukan.");
+            }
+        });
     </script>
 </body>
 </html>
