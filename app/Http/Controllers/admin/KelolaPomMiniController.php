@@ -38,4 +38,38 @@ class KelolaPomMiniController extends Controller
 
         return redirect()->to('admin/kelola-pom-mini')->with('success', 'Data Berhasil Ditambahkan');
     }
+
+    public function edit($id)
+    {
+        $pomMini = PomMiniModel::findOrFail($id);
+        return view('admin/kelola_pom_mini/form_edit', compact('pomMini'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'nama' => 'required|string|max:255',
+            'alamat' => 'required|string|max:255',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+        ]);
+
+        $pomMini = PomMiniModel::findOrFail($id);
+        $pomMini->update([
+            'nama' => $request->nama,
+            'alamat' => $request->alamat,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+        ]);
+
+        return redirect('admin/kelola-pom-mini')->with('success', 'Pom Mini berhasil diperbarui');
+    }
+
+    public function delete($id)
+    {
+        $pomMini = PomMiniModel::findOrFail($id);
+        $pomMini->delete();
+
+        return redirect('admin/kelola-pom-mini')->with('success', 'Pom Mini berhasil dihapus');
+    }
 }

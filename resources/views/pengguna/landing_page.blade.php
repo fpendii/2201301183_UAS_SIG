@@ -1,56 +1,61 @@
-<!-- resources/views/landing_page.blade.php -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIG Pendataan Pom Mini di Tanah Laut</title>
-    <link href="https://unpkg.com/tailwindcss@^2.2/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <style>
         #mapid { height: 600px; }
     </style>
 </head>
-<body class="bg-gray-100">
-    <header class="bg-blue-600 p-4 shadow-lg">
-        <div class="container mx-auto">
-            <h1 class="text-white text-3xl font-bold">SIG Pendataan Pom Mini di Tanah Laut</h1>
+<body class="bg-light">
+    <header class="py-4 mb-2 shadow-lg">
+        <div class="container">
+            <nav class="navbar navbar-expand-lg bg-body-tertiary">
+                <div class="container-fluid">
+                  <h2><a class="navbar-brand" href="#">Pom Mini</a></h2>
+                  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                  </button>
+                  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                      <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="{{url('admin/kelola-pom-mini')}}">Login</a>
+                      </li>
+
+                    </ul>
+
+
+                  </div>
+                </div>
+              </nav>
         </div>
     </header>
 
-    <main class="container mx-auto mt-8 p-4 bg-white rounded shadow-lg">
+    <main class="container mt-8 py-6 bg-white rounded shadow-lg">
         <div id="mapid" class="rounded mb-4"></div>
-        <button id="checkNearest" class="bg-blue-600 text-white px-4 py-2 rounded">Cek Lokasi Terdekat</button>
-        <div id="distanceInfo" class="text-center text-lg font-semibold text-blue-600 mt-4"></div>
-        <div id="nearestInfo" class="text-center text-lg font-semibold text-green-600 mt-4"></div>
+        <button id="checkNearest" class="btn btn-primary">Cek Lokasi Terdekat</button>
+        <div id="distanceInfo" class="text-center h5 font-weight-bold text-primary mt-4"></div>
+        <div id="nearestInfo" class="text-center h5 font-weight-bold text-success mt-4"></div>
     </main>
 
-    <footer class="bg-blue-600 p-4 mt-8">
-        <div class="container mx-auto text-center text-white">
+    <footer class="bg-primary py-4 mt-8">
+        <div class="container text-center text-white">
             &copy; 2024 SIG Pendataan Pom Mini di Tanah Laut. All rights reserved.
         </div>
     </footer>
 
+    <!-- Bootstrap and necessary scripts -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.6.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script>
-        var map = L.map('mapid').setView([-3.3176, 114.5901], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-        }).addTo(map);
-
         // Data Pom Mini dari Laravel
         var pomMiniData = @json($pomMini);
-
-        // Fungsi untuk menambahkan marker untuk setiap Pom Mini
-        function addMarkers() {
-            pomMiniData.forEach(function(pom) {
-                L.marker([pom.latitude, pom.longitude]).addTo(map)
-                    .bindPopup(`<b>${pom.nama}</b><br>${pom.alamat}`);
-            });
-        }
-
-        // Panggil fungsi addMarkers untuk menambahkan marker pada saat halaman dimuat
-        addMarkers();
 
         // Fungsi untuk menghitung jarak
         function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -65,12 +70,16 @@
             return distance;
         }
 
-        // Mendapatkan lokasi pengguna saat ini
         var userLat, userLon;
+        var map = L.map('mapid');
+
+        // Mendapatkan lokasi pengguna saat ini
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function(position) {
                 userLat = position.coords.latitude;
                 userLon = position.coords.longitude;
+
+                map.setView([userLat, userLon], 13);
 
                 // Tambahkan marker untuk lokasi pengguna
                 var userMarker = L.marker([userLat, userLon]).addTo(map)
@@ -87,10 +96,29 @@
                 distanceInfo.innerHTML = 'Jarak ke setiap Pom Mini telah dihitung dan ditampilkan pada popup marker.';
             }, function(error) {
                 alert("Geolocation gagal: " + error.message);
+                // Set default view jika geolocation gagal
+                map.setView([-3.3176, 114.5901], 13);
             });
         } else {
             alert("Geolocation tidak didukung oleh browser ini.");
+            // Set default view jika geolocation tidak didukung
+            map.setView([-3.3176, 114.5901], 13);
         }
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+
+        // Fungsi untuk menambahkan marker untuk setiap Pom Mini
+        function addMarkers() {
+            pomMiniData.forEach(function(pom) {
+                L.marker([pom.latitude, pom.longitude]).addTo(map)
+                    .bindPopup(`<b>${pom.nama}</b><br>${pom.alamat}`);
+            });
+        }
+
+        // Panggil fungsi addMarkers untuk menambahkan marker pada saat halaman dimuat
+        addMarkers();
 
         document.getElementById('checkNearest').addEventListener('click', function() {
             if (userLat && userLon) {
