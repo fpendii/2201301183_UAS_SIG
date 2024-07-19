@@ -25,10 +25,7 @@
                       <li class="nav-item">
                         <a class="nav-link active" aria-current="page" href="{{url('admin/kelola-pom-mini')}}">Login</a>
                       </li>
-
                     </ul>
-
-
                   </div>
                 </div>
               </nav>
@@ -57,6 +54,35 @@
         // Data Pom Mini dari Laravel
         var pomMiniData = @json($pomMini);
 
+        // URL ikon untuk lokasi pengguna dan Pom Mini
+        var userIconUrl = 'img/user.png';
+        var pomMiniIconUrl = 'img/fuel.png';
+        var nearestIconUrl = 'img/nearest.png'; // Icon khusus untuk Pom Mini terdekat
+
+        // Membuat ikon pengguna
+        var userIcon = L.icon({
+            iconUrl: userIconUrl,
+            iconSize: [38, 38], // ukuran ikon
+            iconAnchor: [19, 38], // titik tempat ikon "diikat" ke koordinatnya
+            popupAnchor: [0, -38] // titik tempat popup diikat ke ikonnya
+        });
+
+        // Membuat ikon Pom Mini
+        var pomMiniIcon = L.icon({
+            iconUrl: pomMiniIconUrl,
+            iconSize: [38, 38],
+            iconAnchor: [19, 38],
+            popupAnchor: [0, -38]
+        });
+
+        // Membuat ikon Pom Mini terdekat
+        var nearestIcon = L.icon({
+            iconUrl: nearestIconUrl,
+            iconSize: [38, 38],
+            iconAnchor: [19, 38],
+            popupAnchor: [0, -38]
+        });
+
         // Fungsi untuk menghitung jarak
         function calculateDistance(lat1, lon1, lat2, lon2) {
             const R = 6371; // Radius bumi dalam kilometer
@@ -79,16 +105,16 @@
                 userLat = position.coords.latitude;
                 userLon = position.coords.longitude;
 
-                map.setView([userLat, userLon], 13);
+                map.setView([userLat, userLon], 17);
 
                 // Tambahkan marker untuk lokasi pengguna
-                var userMarker = L.marker([userLat, userLon]).addTo(map)
+                var userMarker = L.marker([userLat, userLon], {icon: userIcon}).addTo(map)
                     .bindPopup("<b>Lokasi Anda</b>").openPopup();
 
                 // Menampilkan marker dan jarak untuk setiap Pom Mini
                 pomMiniData.forEach(function(pom) {
                     var distance = calculateDistance(userLat, userLon, pom.latitude, pom.longitude).toFixed(2);
-                    L.marker([pom.latitude, pom.longitude]).addTo(map)
+                    L.marker([pom.latitude, pom.longitude], {icon: pomMiniIcon}).addTo(map)
                         .bindPopup(`<b>${pom.nama}</b><br>${pom.alamat}<br>Jarak: ${distance} km`);
                 });
 
@@ -112,7 +138,7 @@
         // Fungsi untuk menambahkan marker untuk setiap Pom Mini
         function addMarkers() {
             pomMiniData.forEach(function(pom) {
-                L.marker([pom.latitude, pom.longitude]).addTo(map)
+                L.marker([pom.latitude, pom.longitude], {icon: pomMiniIcon}).addTo(map)
                     .bindPopup(`<b>${pom.nama}</b><br>${pom.alamat}`);
             });
         }
@@ -135,8 +161,22 @@
                 });
 
                 if (nearestPomMini) {
+                    // Hapus marker sebelumnya jika ada
+                    if (typeof nearestMarker !== 'undefined') {
+                        map.removeLayer(nearestMarker);
+                    }
+
+                    // Tambahkan marker untuk Pom Mini terdekat
+                    var nearestMarker = L.marker([nearestPomMini.latitude, nearestPomMini.longitude], {icon: nearestIcon}).addTo(map)
+                        .bindPopup(`<b>${nearestPomMini.nama}</b><br>${nearestPomMini.alamat}<br>Jarak: ${nearestDistance.toFixed(2)} km`).openPopup();
+
+                    map.setView([nearestPomMini.latitude, nearestPomMini.longitude], 17);
+
                     var nearestInfo = document.getElementById('nearestInfo');
                     nearestInfo.innerHTML = `Pom Mini terdekat adalah ${nearestPomMini.nama} di ${nearestPomMini.alamat}, dengan jarak ${nearestDistance.toFixed(2)} km.`;
+
+                    // Tambahkan garis jalur jalan ke Pom Mini terdekat
+                    var route = L.polyline([[userLat, userLon], [nearestPomMini.latitude, nearestPomMini.longitude]], {color: 'blue'}).addTo(map);
                 }
             } else {
                 alert("Lokasi Anda belum ditemukan.");

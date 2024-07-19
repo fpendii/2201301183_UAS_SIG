@@ -14,5 +14,5 @@ class LandingPageController extends Controller
         return view('pengguna/landing_page',compact('pomMini'));
     }
 
-    
+
 }
